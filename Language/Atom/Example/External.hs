@@ -25,7 +25,7 @@ extern = do
   -- External reference to a variable 'g_random' which is a uint16:
   let rng = word16' "g_random"
 
-  atom "update" $ do
+  atom "update" "" $ do
     -- Call external function 'new_random' which updates g_random:
     call "new_random"
     printIntegralE "g_random" $ value rng

@@ -79,19 +79,19 @@ debounce :: Name -- ^ Name of the resulting atom
          -> Bool -- ^ Initial value
          -> E Bool -- ^ The boolean to debounce
          -> Atom (E Bool) -- ^ Resulting debounced boolean
-debounce name onTime offTime init' a = atom name $ do
+debounce name onTime offTime init' a = atom name "" $ do
   lst  <- bool "last" init'
   out   <- bool "out"  init'
   timer' <- timer "timer"
-  atom "on" $ do
+  atom "on" "" $ do
     cond $ a &&. not_ (value lst)
     startTimer timer' onTime
     lst <== a
-  atom "off" $ do
+  atom "off" "" $ do
     cond $ not_ a &&. value lst
     startTimer timer' offTime
     lst <== a
-  atom "set" $ do
+  atom "set" "" $ do
     cond $ a ==. value lst
     cond $ timerDone timer'
     out <== value lst

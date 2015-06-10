@@ -75,6 +75,7 @@ data AtomDB = AtomDB
   , atomActions     :: [([String] -> String, [Hash])]
   , atomAsserts     :: [(Name, Hash)]
   , atomCovers      :: [(Name, Hash)]
+  , atomComm        :: String
   }
 
 data Rule
@@ -86,6 +87,7 @@ data Rule
     , ruleActions   :: [([String] -> String, [Hash])]
     , rulePeriod    :: Int
     , rulePhase     :: Phase
+    , ruleComment   :: String
 --    , mathH         :: Bool -- Contains a math.h call?
     }
   | Assert
@@ -141,6 +143,7 @@ elaborateRules parentEnable atom =
       , ruleActions   = atomActions atom
       , rulePeriod    = atomPeriod  atom
       , rulePhase     = atomPhase   atom
+      , ruleComment   = atomComm    atom
       }
   assert :: (Name, Hash) -> UeState Rule
   assert (name, u) = do 
@@ -186,11 +189,11 @@ elaborateRules parentEnable atom =
 reIdRules :: Int -> [Rule] -> [Rule]
 reIdRules _ [] = []
 reIdRules i (a:b) = case a of
-  Rule _ _ _ _ _ _ _ -> a { ruleId = i } : reIdRules (i + 1) b
+  Rule _ _ _ _ _ _ _ _ -> a { ruleId = i } : reIdRules (i + 1) b
   _                    -> a                : reIdRules  i      b
 
-buildAtom :: UeMap -> Global -> Name -> Atom a -> IO (a, AtomSt)
-buildAtom st g name (Atom f) = do
+buildAtom :: UeMap -> Global -> Name -> Atom a -> String -> IO (a, AtomSt)
+buildAtom st g name (Atom f) comm = do
   let (h,st') = newUE (ubool True) st
 --  S.put st' 
   f (st', (g { gRuleId = gRuleId g + 1 }, AtomDB
@@ -205,6 +208,7 @@ buildAtom st g name (Atom f) = do
                  , atomActions   = []
                  , atomAsserts   = []
                  , atomCovers    = []
+                 , atomComm      = comm
                  }))
 --  S.return db
 
@@ -263,7 +267,7 @@ elaborate st name atom = do
                                                  , gPeriod = 1
                                                  , gPhase  = MinPhase 0 
                                                  } 
-                                       name atom 
+                                       name atom ""
   let (h,st1) = newUE (ubool True) st0
       (getRules,st2) = S.runState (elaborateRules h atomDB) st1
       rules = reIdRules 0 (reverse getRules)
@@ -304,7 +308,7 @@ checkEnable st rule
 -- | Check that a variable is assigned more than once in a rule.  Will
 -- eventually be replaced consistent assignment checking.
 checkAssignConflicts :: Rule -> IO Bool
-checkAssignConflicts rule@(Rule _ _ _ _ _ _ _) = 
+checkAssignConflicts rule@(Rule _ _ _ _ _ _ _ _) = 
   if length vars /= length vars'
     then do
       putStrLn $ "ERROR: Rule " 
@@ -421,7 +425,7 @@ ruleGraph name rules uvs = do
 allUVs :: UeMap -> [Rule] -> Hash -> [MUV]
 allUVs st rules ue' = fixedpoint next $ nearestUVs ue' st
   where
-  assigns = concat [ ruleAssigns r | r@(Rule _ _ _ _ _ _ _) <- rules ]
+  assigns = concat [ ruleAssigns r | r@(Rule _ _ _ _ _ _ _ _) <- rules ]
   previousUVs :: MUV -> [MUV]
   previousUVs u = concat [ nearestUVs ue_ st | (uv', ue_) <- assigns, u == uv' ]
   next :: [MUV] -> [MUV]
@@ -439,7 +443,7 @@ allUEs rule = ruleEnable rule : ues
   index (MUVArray _ ue') = [ue']
   index _ = []
   ues = case rule of
-    Rule _ _ _ _ _ _ _ -> 
+    Rule _ _ _ _ _ _ _ _ -> 
          concat [ ue' : index uv' | (uv', ue') <- ruleAssigns rule ] 
       ++ concat (snd (unzip (ruleActions rule)))
     Assert _ _ a       -> [a]

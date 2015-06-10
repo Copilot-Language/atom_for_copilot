@@ -85,12 +85,12 @@ infixr 1 <==
 type Atom = E.Atom
 
 -- | Creates a hierarchical node, where each node could be an atomic rule.
-atom :: Name -> Atom a -> Atom a
-atom name design = do
+atom :: Name -> String -> Atom a -> Atom a
+atom name comm design = do
   name' <- addName name
   (st1, (g1, parent)) <- get
   (a, (st2, (g2, child))) <- liftIO $
-                             buildAtom st1 g1 { gState = [] } name' design
+                             buildAtom st1 g1 { gState = [] } name' design comm
   put (st2, ( g2 { gState = gState g1 ++ [StateHierarchy name $ gState g2] }
             , parent { atomSubs = atomSubs parent ++ [child] }))
   return a

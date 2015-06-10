@@ -38,7 +38,7 @@ fader :: Name -- ^ Name
          -> E Double -- ^ Signal A
          -> E Double -- ^ Signal B
          -> Atom (Fader, E Double)
-fader name_ rate init_ a b = atom name_ $ do
+fader name_ rate init_ a b = atom name_ "" $ do
   --assert "positiveRate" $ rate >= 0
 
   target <- int32 "target" $ case init_ of OnA -> toA
@@ -48,22 +48,22 @@ fader name_ rate init_ a b = atom name_ $ do
                                         OnB -> 0
                                         OnCenter -> 0.5
 
-  atom "toA" $ do
+  atom "toA" "" $ do
     cond $ value target ==. Const toA
     cond $ value perA <. 1
     perA <== mux (1 - value perA <. Const rate) 1 (value perA + Const rate)
 
-  atom "toB" $ do
+  atom "toB" "" $ do
     cond $ value target ==. Const toB
     cond $ value perA >. 0
     perA <== mux (value perA <. Const rate) 0 (value perA - Const rate)
 
-  atom "toCenterFrom0" $ do
+  atom "toCenterFrom0" "" $ do
     cond $ value target ==. Const toCenter
     cond $ value perA <. 0.5
     perA <== mux (0.5 - value perA <. Const rate) 0.5 (value perA + Const rate)
 
-  atom "toCenterFrom1" $ do
+  atom "toCenterFrom1" "" $ do
     cond $ value target ==. Const toCenter
     cond $ value perA >. 0.5
     perA <== mux (value perA - 0.5 <. Const rate) 0.5 (value perA - Const rate)

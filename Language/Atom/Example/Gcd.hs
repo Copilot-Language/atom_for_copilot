@@ -61,17 +61,17 @@ example = do
   let running = bool' "running"
 
   -- A rule to modify A.
-  atom "a_minus_b" $ do
+  atom "a_minus_b" "" $ do
     cond $ value a >. value b
     a <== value a - value b
 
   -- A rule to modify B.
-  atom "b_minus_a" $ do
+  atom "b_minus_a" "" $ do
     cond $ value b >. value a
     b <== value b - value a
 
   -- A rule to clear the running flag.
-  atom "stop" $ do
+  atom "stop" "" $ do
     cond $ value a ==. value b
     running <== false
 

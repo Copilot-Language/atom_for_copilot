@@ -417,7 +417,7 @@ declState define a' = if isHierarchyEmpty a' then ""
   where
   f1 i a = case a of
     StateHierarchy name items ->
-         i ++ "struct {  /* " ++ name ++ " */\n"
+         i ++ "struct {  /*01 " ++ name ++ " */\n"
       ++ concatMap (f1 ("  " ++ i)) items ++ i ++ "} " ++ name ++ ";\n"
     StateVariable  name c     -> i ++ cType (E.typeOf c) ++ " " ++ name ++ ";\n"
     StateArray     name c     ->
@@ -425,11 +425,11 @@ declState define a' = if isHierarchyEmpty a' then ""
 
   f2 i a = case a of
     StateHierarchy name items ->
-         i ++ "{  /* " ++ name ++ " */\n"
+         i ++ "{  /*02 " ++ name ++ " */\n"
       ++ intercalate ",\n" (map (f2 ("  " ++ i)) items) ++ "\n" ++ i ++ "}"
-    StateVariable  name c     -> i ++ "/* " ++ name ++ " */  " ++ showConst c
+    StateVariable  name c     -> i ++ "/*03 " ++ name ++ " */  " ++ showConst c
     StateArray     name c     ->
-         i ++ "/* " ++ name ++ " */\n" ++ i ++ "{ "
+         i ++ "/*04 " ++ name ++ " */\n" ++ i ++ "{ "
       ++ intercalate ("\n" ++ i ++ ", ") (map showConst c) ++ "\n" ++ i ++ "}"
 
   isHierarchyEmpty h = case h of
@@ -438,8 +438,8 @@ declState define a' = if isHierarchyEmpty a' then ""
     StateArray n c -> False
 
 codeRule :: UeMap -> Config -> Rule -> String
-codeRule mp config rule@(Rule _ _ _ _ _ _ _) =
-  "/* " ++ show rule ++ " */\n" ++
+codeRule mp config rule@(Rule _ _ _ _ _ _ _ comment) =
+  "/*05 " ++ show rule ++ " */\n" ++ comment ++
   "static void __r" ++ show (ruleId rule) ++ "() {\n" ++
   concatMap (codeUE mp config ues "  ") ues ++
   "  if (" ++ id' (ruleEnable rule) ++ ") {\n" ++
@@ -513,5 +513,5 @@ codePeriodPhase config (period, phase, rules) = unlines
   clockType' | period < 2 ^  (8 :: Word8)  = Word8
              | period < 2 ^ (16 :: Word16) = Word16
              | otherwise                   = Word32
-  callRule r = concat ["      ", codeIf (cAssert config) "__assertion_checks(); ", "__r", show (ruleId r), "();  /* ", show r, " */"]
+  callRule r = concat ["      ", codeIf (cAssert config) "__assertion_checks(); ", "__r", show (ruleId r), "();  /*06 ", show r, " */"]
 

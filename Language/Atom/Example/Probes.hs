@@ -44,7 +44,7 @@ example = do
 
   -- At 1/200 of our base rate (~ 5 seconds), we call 'logProbe' on all of the
   -- probes that are in use.
-  period 200 $ atom "monitor" $ do
+  period 200 $ atom "monitor" "" $ do
     mapM_ logProbe =<< probes
 
 prePostCode :: [Name] -> [Name] -> [(Name, Type)] -> (String, String)
@@ -76,6 +76,6 @@ tickSecond = do
   -- Add a probe to the clock:
   probe "Seconds" $ value sec
   
-  period 1000 $ exactPhase 0 $ atom "second" $ incr sec
+  period 1000 $ exactPhase 0 $ atom "second" "" $ incr sec
   
   return sec
